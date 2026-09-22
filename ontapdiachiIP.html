@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giải Mã IP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Nunito', sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      overflow: hidden;
+    }
+
+    #app {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      gap: 8px;
+    }
+
+    /* ── Header ── */
+    #header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    #header h1 {
+      font-size: clamp(20px, 2.6vw, 34px);
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: 1px;
+    }
+
+    /* ── Game card ── */
+    #game-card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 1100px;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 22px;
+      gap: 8px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ── Top row ── */
+    #top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 12px;
+    }
+
+    #round-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .round-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 16px;
+      border-radius: 999px;
+      font-size: clamp(12px, 1.3vw, 15px);
+      font-weight: 700;
+      border: 2px solid;
+      white-space: nowrap;
+    }
+
+    .round-pill.done {
+      border-color: #16a34a;
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .round-pill.active {
+      border-color: #2563eb;
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .round-pill.pending {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+      color: #94a3b8;
+    }
+
+    #score-box {
+      text-align: right;
+    }
+
+    #score-box .lbl {
+      font-size: clamp(10px, 1.1vw, 13px);
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #score-display {
+      font-size: clamp(22px, 2.8vw, 36px);
+      font-weight: 900;
+      color: #2563eb;
+      line-height: 1;
+    }
+
+    /* ── Progress ── */
+    #progress-track {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #2563eb, #16a34a);
+      transition: width 0.5s ease;
+    }
+
+    /* ── Main area ── */
+    #main-area {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    /* ── Left col ── */
+    #left-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+      gap: 6px;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px 12px;
+    }
+
+    #target-section {
+      text-align: center;
+    }
+
+    #round-label {
+      font-size: clamp(11px, 1.3vw, 15px);
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 2px;
+    }
+
+    #target-value {
+      font-size: clamp(52px, 8vw, 100px);
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1;
+    }
+
+    #mode-hint {
+      font-size: clamp(12px, 1.3vw, 15px);
+      color: #475569;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Switch board */
+    #switch-row {
+      display: flex;
+      justify-content: center;
+      gap: clamp(4px, 0.9vw, 12px);
+      margin-bottom: 6px;
+    }
+
+    #power-labels {
+      display: flex;
+      justify-content: center;
+      gap: clamp(4px, 0.9vw, 12px);
+    }
+
+    .bit-switch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: clamp(58px, 8.5vw, 96px);
+      height: clamp(74px, 11vw, 120px);
+      border-radius: 12px;
+      border: 2px solid #cbd5e1;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      background: #ffffff;
+    }
+
+    .bit-switch.off {
+      border-color: #cbd5e1;
+      background: #ffffff;
+    }
+
+    .bit-switch.on {
+      border-color: #16a34a;
+      background: #f0fdf4;
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+    }
+
+    .bit-switch:hover:not(.locked) {
+      border-color: #94a3b8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .bit-switch:active:not(.locked) {
+      transform: scale(0.95);
+    }
+
+    .bit-switch.locked {
+      cursor: not-allowed;
+    }
+
+    .bulb {
+      width: clamp(18px, 2.6vw, 32px);
+      height: clamp(18px, 2.6vw, 32px);
+      border-radius: 50%;
+      background: #e2e8f0;
+      border: 2px solid #cbd5e1;
+      transition: all 0.15s;
+    }
+
+    .bit-switch.on .bulb {
+      background: #4ade80;
+      border-color: #16a34a;
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+    }
+
+    .bit-digit {
+      font-size: clamp(24px, 3.4vw, 46px);
+      font-weight: 900;
+      color: #94a3b8;
+      transition: color 0.15s;
+      line-height: 1;
+    }
+
+    .bit-switch.on .bit-digit {
+      color: #15803d;
+    }
+
+    .power-lbl {
+      font-size: clamp(10px, 1.2vw, 15px);
+      font-weight: 800;
+      color: #64748b;
+      text-align: center;
+      width: clamp(58px, 8.5vw, 96px);
+    }
+
+    /* Readout bar */
+    #readout-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 20px;
+      width: 100%;
+    }
+
+    .readout-group {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .readout-lbl {
+      font-size: clamp(11px, 1.2vw, 14px);
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    #binary-display {
+      font-size: clamp(16px, 2.2vw, 26px);
+      font-weight: 800;
+      color: #2563eb;
+      letter-spacing: 4px;
+    }
+
+    #decimal-live {
+      font-size: clamp(22px, 2.8vw, 34px);
+      font-weight: 900;
+      color: #16a34a;
+    }
+
+    #decimal-live.mismatch {
+      color: #dc2626;
+    }
+
+    #decimal-live.hidden-val {
+      color: #cbd5e1;
+    }
+
+    /* ── Right col ── */
+    #right-col {
+      width: clamp(220px, 26vw, 310px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #answer-panel {
+      flex: 1;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-title {
+      font-size: clamp(12px, 1.4vw, 15px);
+      font-weight: 800;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    #mc-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .mc-btn {
+      padding: clamp(10px, 1.3vw, 16px) 8px;
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      background: #ffffff;
+      color: #1e293b;
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(20px, 2.4vw, 32px);
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .mc-btn:hover:not(:disabled) {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    .mc-btn.selected {
+      border-color: #2563eb;
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .mc-btn.correct {
+      border-color: #16a34a;
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .mc-btn.wrong {
+      border-color: #dc2626;
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .mc-btn:disabled {
+      cursor: not-allowed;
+    }
+
+    #mode-a-hint {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: clamp(13px, 1.5vw, 17px);
+      line-height: 1.6;
+      padding: 8px;
+    }
+
+    #feedback {
+      text-align: center;
+      min-height: 24px;
+      font-size: clamp(13px, 1.5vw, 17px);
+      font-weight: 800;
+      border-radius: 8px;
+      padding: 5px 10px;
+    }
+
+    #feedback.correct {
+      color: #15803d;
+      background: #dcfce7;
+    }
+
+    #feedback.wrong {
+      color: #b91c1c;
+      background: #fee2e2;
+    }
+
+    #feedback.warn {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    #confirm-btn {
+      padding: clamp(11px, 1.5vw, 18px) 24px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(14px, 1.8vw, 21px);
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 1px;
+      width: 100%;
+    }
+
+    #confirm-btn:hover:not(:disabled) {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+    }
+
+    #confirm-btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    #confirm-btn:disabled {
+      background: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #kbd-hint {
+      font-size: clamp(10px, 1.1vw, 12px);
+      color: #94a3b8;
+      text-align: center;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* ── Modals ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 20px;
+      padding: clamp(24px, 3vw, 40px);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-card h2 {
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 10px;
+    }
+
+    .modal-card p {
+      font-size: clamp(13px, 1.5vw, 17px);
+      color: #475569;
+      font-weight: 600;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .mode-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .mode-box {
+      flex: 1;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .mode-box.a {
+      background: #dbeafe;
+      border: 2px solid #93c5fd;
+    }
+
+    .mode-box.b {
+      background: #dcfce7;
+      border: 2px solid #86efac;
+    }
+
+    .mode-label {
+      font-size: clamp(11px, 1.3vw, 14px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .mode-box.a .mode-label {
+      color: #1d4ed8;
+    }
+
+    .mode-box.b .mode-label {
+      color: #15803d;
+    }
+
+    .mode-desc {
+      font-size: clamp(12px, 1.3vw, 14px);
+      color: #374151;
+      font-weight: 600;
+    }
+
+    .modal-btn {
+      padding: clamp(12px, 1.5vw, 18px) 32px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(15px, 1.8vw, 21px);
+      font-weight: 900;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.15s;
+      letter-spacing: 1px;
+    }
+
+    .modal-btn:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+    }
+
+    #final-score-big {
+      font-size: clamp(52px, 6.5vw, 80px);
+      font-weight: 900;
+      color: #2563eb;
+      line-height: 1;
+    }
+
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.7);
+      }
+
+      70% {
+        transform: scale(1.05);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="app">
+    <!-- Header -->
+    <header id="header">
+      <span style="font-size:clamp(22px,2.8vw,34px)">🔓</span>
+      <h1>GIẢI MÃ IP</h1>
+    </header>
+
+    <!-- Game card -->
+    <div id="game-card">
+      <!-- Top row -->
+      <div id="top-row">
+        <div id="round-pills"></div>
+        <div id="score-box">
+          <div class="lbl">Điểm</div>
+          <div id="score-display">0</div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div id="progress-track">
+        <div id="progress-bar" style="width:0%"></div>
+      </div>
+
+      <!-- Main 2-col area -->
+      <div id="main-area">
+
+        <!-- LEFT: target + switches -->
+        <div id="left-col">
+          <div id="target-section">
+            <div id="round-label">—</div>
+            <div id="target-value">—</div>
+            <div id="mode-hint"></div>
+          </div>
+
+          <div id="board-section">
+            <div id="switch-row"></div>
+            <div id="power-labels"></div>
+          </div>
+
+          <div id="readout-bar">
+            <div class="readout-group">
+              <span class="readout-lbl">Nhị phân:</span>
+              <span id="binary-display">00000000</span>
+            </div>
+            <div class="readout-group">
+              <span class="readout-lbl">Thập phân:</span>
+              <span id="decimal-live">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: answers -->
+        <div id="right-col">
+          <div id="answer-panel">
+            <div class="panel-title" id="panel-title">Đáp Án</div>
+
+            <div id="mc-section" style="display:none">
+              <div id="mc-options"></div>
+            </div>
+
+            <div id="mode-a-hint">
+              Bật / Tắt các công tắc<br />sao cho tổng = số mục tiêu
+            </div>
+
+            <div id="feedback"></div>
+            <button id="confirm-btn" onclick="handleConfirm()">✔ XÁC NHẬN</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="kbd-hint">⌨ Phím 1–8: bật/tắt công tắc &nbsp;|&nbsp; Enter: xác nhận &nbsp;|&nbsp; Phím 1–4: chọn đáp án
+      </div>
+    </div>
+  </div>
+
+  <!-- START MODAL -->
+  <div id="start-screen" class="modal-overlay">
+    <div class="modal-card">
+      <div style="font-size:52px;margin-bottom:12px">🔓</div>
+      <h2>Giải Mã IP</h2>
+      <p>Chuyển đổi giữa <strong style="color:#1d4ed8">nhị phân</strong> và <strong style="color:#15803d">thập
+          phân</strong> để giải mã địa chỉ IP.<br />Vượt qua 4 vòng để hoàn thành!</p>
+      <div class="mode-row">
+        <div class="mode-box a">
+          <div class="mode-label">Chế Độ A — Dec → Bin</div>
+          <div class="mode-desc">Thấy số → Bật đúng công tắc</div>
+        </div>
+        <div class="mode-box b">
+          <div class="mode-label">Chế Độ B — Bin → Dec</div>
+          <div class="mode-desc">Đọc công tắc → Chọn số đúng</div>
+        </div>
+      </div>
+      <button class="modal-btn" onclick="startGame()">▶ Bắt Đầu</button>
+    </div>
+  </div>
+
+  <!-- WIN MODAL -->
+  <div id="win-modal" class="modal-overlay" style="display:none">
+    <div class="modal-card">
+      <div style="font-size:56px;margin-bottom:10px">🏆</div>
+      <h2>Xuất Sắc! Hoàn Thành!</h2>
+      <p>Bạn đã giải mã thành công 4 byte của địa chỉ IP!</p>
+      <div id="final-score-big">0</div>
+      <div style="color:#64748b;font-weight:700;font-size:15px;margin:6px 0 20px">điểm</div>
+      <button class="modal-btn" onclick="restartGame()">🔄 Chơi Lại</button>
+    </div>
+  </div>
+
+  <script>
+    /* ════ WEB AUDIO ════ */
+    let audioCtx = null;
+    function ensureAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function playClick() {
+      ensureAudio(); const t = audioCtx.currentTime;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      g.connect(audioCtx.destination);
+      const o = audioCtx.createOscillator();
+      o.type = 'square'; o.frequency.setValueAtTime(500, t); o.frequency.exponentialRampToValueAtTime(200, t + 0.07);
+      o.connect(g); o.start(t); o.stop(t + 0.08);
+    }
+    function playSuccess() {
+      ensureAudio(); const t = audioCtx.currentTime;
+      [880, 1108, 1320, 1760].forEach((f, i) => {
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0, t + i * 0.1); g.gain.linearRampToValueAtTime(0.13, t + i * 0.1 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.25); g.connect(audioCtx.destination);
+        const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        o.connect(g); o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.28);
+      });
+    }
+    function playError() {
+      ensureAudio(); const t = audioCtx.currentTime;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      g.connect(audioCtx.destination);
+      const o = audioCtx.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(180, t); o.frequency.linearRampToValueAtTime(60, t + 0.4);
+      o.connect(g); o.start(t); o.stop(t + 0.44);
+    }
+    function playWin() {
+      ensureAudio(); const t = audioCtx.currentTime;
+      [523, 659, 784, 1047, 880, 1047, 1175, 1568].forEach((f, i) => {
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0, t + i * 0.13); g.gain.linearRampToValueAtTime(0.12, t + i * 0.13 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.13 + 0.2); g.connect(audioCtx.destination);
+        const o = audioCtx.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+        o.connect(g); o.start(t + i * 0.13); o.stop(t + i * 0.13 + 0.24);
+      });
+    }
+
+    /* ════ DATA — 4 bộ IP khác nhau ════ */
+    const IP_SETS = [
+      { ip: '192.168.13.210', bytes: [192, 168, 13, 210] },
+      { ip: '131.214.23.16', bytes: [131, 214, 23, 16] },
+      { ip: '172.16.254.1', bytes: [172, 16, 254, 1] },
+      { ip: '10.250.100.45', bytes: [10, 250, 100, 45] },
+    ];
+
+    const POWERS = [128, 64, 32, 16, 8, 4, 2, 1];
+
+    function sfl(a) {
+      const b = [...a];
+      for (let i = b.length - 1; i > 0; i--) {
+        const j = 0 | Math.random() * (i + 1);[b[i], b[j]] = [b[j], b[i]];
+      }
+      return b;
+    }
+
+    // Track which byte index was used per IP to avoid repeats within a session
+    const usedByteIdx = [[], [], [], []]; // one per IP set
+
+    function pickRounds() {
+      // Shuffle IP set order each game
+      const ipOrder = sfl([0, 1, 2, 3]);
+      return ipOrder.map(ipIdx => {
+        const ip = IP_SETS[ipIdx];
+        // Pick a byte index not yet used for this IP, or reset if all used
+        if (usedByteIdx[ipIdx].length >= 4) usedByteIdx[ipIdx] = [];
+        const available = [0, 1, 2, 3].filter(b => !usedByteIdx[ipIdx].includes(b));
+        const byteIdx = available[0 | Math.random() * available.length];
+        usedByteIdx[ipIdx].push(byteIdx);
+        const byteNames = ['Byte 1', 'Byte 2', 'Byte 3', 'Byte 4'];
+        return {
+          target: ip.bytes[byteIdx],
+          label: `Địa chỉ IP: ${ip.ip}`,
+          byteLabel: byteNames[byteIdx],
+        };
+      });
+    }
+
+    /* ════ STATE ════ */
+    let rounds = [], roundIdx = 0, score = 0;
+    let bits = [0, 0, 0, 0, 0, 0, 0, 0];
+    let mode = 'A', mcOpts = [], selMc = null, answered = false;
+
+    /* ════ DOM ════ */
+    const $sr = document.getElementById('switch-row');
+    const $pl = document.getElementById('power-labels');
+    const $bin = document.getElementById('binary-display');
+    const $dec = document.getElementById('decimal-live');
+    const $tv = document.getElementById('target-value');
+    const $rl = document.getElementById('round-label');
+    const $mh = document.getElementById('mode-hint');
+    const $fb = document.getElementById('feedback');
+    const $cb = document.getElementById('confirm-btn');
+    const $mcs = document.getElementById('mc-section');
+    const $mco = document.getElementById('mc-options');
+    const $mah = document.getElementById('mode-a-hint');
+    const $pt = document.getElementById('panel-title');
+    const $pb = document.getElementById('progress-bar');
+    const $rp = document.getElementById('round-pills');
+    const $sd = document.getElementById('score-display');
+    const $wm = document.getElementById('win-modal');
+    const $ss = document.getElementById('start-screen');
+    const $fs = document.getElementById('final-score-big');
+
+    /* ════ BOARD ════ */
+    function buildBoard() {
+      $sr.innerHTML = ''; $pl.innerHTML = '';
+      POWERS.forEach((pw, idx) => {
+        const sw = document.createElement('div');
+        sw.id = `sw-${idx}`; sw.className = 'bit-switch off';
+        sw.innerHTML = `<div class="bulb"></div><div class="bit-digit">0</div>`;
+        sw.addEventListener('click', () => toggleBit(idx));
+        $sr.appendChild(sw);
+        const lbl = document.createElement('div');
+        lbl.className = 'power-lbl'; lbl.textContent = pw;
+        $pl.appendChild(lbl);
+      });
+    }
+
+    function toggleBit(idx) {
+      if (mode === 'B' || answered) return;
+      playClick(); bits[idx] ^= 1; syncSw(idx); updateReadout();
+    }
+    function syncSw(idx) {
+      const sw = document.getElementById(`sw-${idx}`); if (!sw) return;
+      const on = bits[idx] === 1;
+      sw.classList.toggle('on', on); sw.classList.toggle('off', !on);
+      sw.querySelector('.bit-digit').textContent = bits[idx];
+      sw.classList.toggle('locked', mode === 'B');
+    }
+    function resetSw(lock = false, vals = null) {
+      for (let i = 0; i < 8; i++) { bits[i] = vals ? vals[i] : 0; syncSw(i); }
+      if (lock) document.querySelectorAll('.bit-switch').forEach(s => s.classList.add('locked'));
+    }
+    function updateReadout() {
+      const bin = bits.join(''); const dec = parseInt(bin, 2);
+      $bin.textContent = bin;
+      if (mode === 'B') return;
+      $dec.textContent = dec;
+      const hit = rounds[roundIdx] && dec === rounds[roundIdx].target;
+      $dec.className = hit ? '' : 'mismatch';
+    }
+
+    /* ════ PILLS — chỉ hiển thị "Vòng X", KHÔNG lộ đáp án ════ */
+    function refreshPills() {
+      $rp.innerHTML = '';
+      rounds.forEach((r, i) => {
+        const st = i < roundIdx ? 'done' : i === roundIdx ? 'active' : 'pending';
+        const p = document.createElement('div');
+        p.className = `round-pill ${st}`;
+        p.textContent = (st === 'done' ? '✓ ' : '') + `Vòng ${i + 1}`;
+        $rp.appendChild(p);
+      });
+    }
+
+    /* ════ LOAD ROUND ════ */
+    function loadRound(idx) {
+      answered = false; selMc = null; setFb('', '');
+      $cb.disabled = false; $cb.textContent = '✔ XÁC NHẬN';
+      const r = rounds[idx];
+      // Hiện IP đang giải mã nhưng KHÔNG hiện byte nào
+      $rl.textContent = r.label;
+      $pb.style.width = `${(idx / rounds.length) * 100}%`;
+      refreshPills();
+      mode = Math.random() < 0.5 ? 'A' : 'B';
+
+      if (mode === 'A') {
+        $mcs.style.display = 'none'; $mah.style.display = 'flex';
+        $pt.textContent = 'Chế Độ A — Dec → Bin';
+        $tv.textContent = r.target; $tv.style.color = '#0f172a';
+        $mh.textContent = '⬇  Bật công tắc sao cho tổng = số trên';
+        bits = [0, 0, 0, 0, 0, 0, 0, 0]; resetSw(false, null); updateReadout();
+
+      } else {
+        $mcs.style.display = 'block'; $mah.style.display = 'none';
+        $pt.textContent = 'Chế Độ B — Bin → Dec';
+        const lk = d2b(r.target); bits = [...lk]; resetSw(true, lk);
+        $bin.textContent = lk.join('');
+        $dec.textContent = '?'; $dec.className = 'hidden-val';
+        $tv.textContent = lk.join(''); $tv.style.color = '#2563eb';
+        $mh.textContent = '⬆  Đọc nhị phân → chọn số thập phân';
+        mcOpts = genMc(r.target); renderMc();
+      }
+    }
+
+    function d2b(n) { return POWERS.map(p => (n & p) ? 1 : 0); }
+
+    function genMc(c) {
+      const pool = [c + 1, c - 1, c + 4, c - 4, c + 8, c - 8, c + 16, c - 16, c + 32, c - 32, c + 64, c - 64, c + 128, c - 128]
+        .filter(v => v >= 0 && v <= 255 && v !== c);
+      sfl(pool);
+      return sfl([c, ...pool.slice(0, 3)]);
+    }
+
+    function renderMc() {
+      $mco.innerHTML = '';
+      mcOpts.forEach(o => {
+        const b = document.createElement('button'); b.className = 'mc-btn';
+        b.textContent = o; b.dataset.value = o;
+        b.addEventListener('click', () => pickMc(o, b));
+        $mco.appendChild(b);
+      });
+    }
+
+    function pickMc(v, btn) {
+      if (answered) return; playClick(); selMc = v;
+      $mco.querySelectorAll('.mc-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    /* ════ CONFIRM ════ */
+    function handleConfirm() {
+      if (answered) return; ensureAudio();
+      const r = rounds[roundIdx]; let ok = false;
+      if (mode === 'A') { ok = parseInt(bits.join(''), 2) === r.target; }
+      else {
+        if (selMc === null) { setFb('⚠ Hãy chọn một đáp án!', 'warn'); return; }
+        ok = selMc === r.target;
+      }
+      answered = true; $cb.disabled = true;
+
+      if (ok) {
+        const pts = 100 + roundIdx * 25; score += pts; $sd.textContent = score;
+        setFb(`✅  Chính xác!  +${pts} điểm`, 'correct'); playSuccess();
+        if (mode === 'B') {
+          $dec.textContent = r.target; $dec.className = '';
+          [...$mco.querySelectorAll('.mc-btn')]
+            .find(b => +b.dataset.value === r.target)?.classList.add('correct');
+        }
+        setTimeout(() => { roundIdx++; if (roundIdx >= rounds.length) endGame(); else loadRound(roundIdx); }, 1900);
+
+      } else {
+        score = Math.max(0, score - 20); $sd.textContent = score; playError();
+        if (mode === 'A') {
+          setFb(`❌  Sai! Tổng = ${parseInt(bits.join(''), 2)} ≠ ${r.target}`, 'wrong');
+        } else {
+          [...$mco.querySelectorAll('.mc-btn')].find(b => +b.dataset.value === selMc)?.classList.add('wrong');
+          [...$mco.querySelectorAll('.mc-btn')].find(b => +b.dataset.value === r.target)?.classList.add('correct');
+          setFb(`❌  Sai! Đáp án đúng là ${r.target}`, 'wrong');
+        }
+        setTimeout(() => {
+          answered = false; $cb.disabled = false; setFb('', '');
+          if (mode === 'A') { bits = [0, 0, 0, 0, 0, 0, 0, 0]; resetSw(false, null); updateReadout(); }
+          else { selMc = null; renderMc(); $dec.textContent = '?'; $dec.className = 'hidden-val'; }
+        }, 2600);
+      }
+    }
+
+    function setFb(msg, type) { $fb.textContent = msg; $fb.className = type; }
+
+    /* ════ FLOW ════ */
+    function startGame() { $ss.style.display = 'none'; ensureAudio(); init(); }
+    function restartGame() { $wm.style.display = 'none'; ensureAudio(); init(); }
+
+    function init() {
+      rounds = pickRounds(); roundIdx = 0; score = 0; answered = false;
+      $sd.textContent = '0'; buildBoard(); refreshPills(); loadRound(0);
+    }
+
+    function endGame() {
+      $pb.style.width = '100%'; refreshPills(); playWin();
+      $fs.textContent = score;
+      setTimeout(() => { $wm.style.display = 'flex'; fire(); }, 450);
+    }
+
+    function fire() {
+      const c = ['#2563eb', '#16a34a', '#93c5fd', '#86efac', '#1d4ed8', '#15803d', '#f59e0b', '#ffffff'];
+      confetti({ particleCount: 110, spread: 85, origin: { y: 0.5 }, colors: c, scalar: 1.2 });
+      setTimeout(() => {
+        confetti({ particleCount: 60, angle: 60, spread: 55, origin: { x: 0 }, colors: c });
+        confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1 }, colors: c });
+      }, 350);
+      setTimeout(() => {
+        confetti({ particleCount: 80, spread: 100, origin: { y: 0.25 }, colors: c, shapes: ['star'], scalar: 1.5 });
+      }, 750);
+    }
+
+    /* ════ KEYBOARD ════ */
+    document.addEventListener('keydown', e => {
+      if ($ss.style.display !== 'none') return;
+      if ($wm.style.display !== 'none') return;
+      if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); if (!$cb.disabled) handleConfirm(); return; }
+      const n = parseInt(e.key); if (isNaN(n)) return;
+      if (mode === 'A' && n >= 1 && n <= 8 && !answered) toggleBit(n - 1);
+      if (mode === 'B' && n >= 1 && n <= 4 && !answered) {
+        const bs = $mco.querySelectorAll('.mc-btn');
+        if (bs[n - 1]) pickMc(mcOpts[n - 1], bs[n - 1]);
+      }
+    });
+
+    buildBoard();
+  </script>
+</body>
+
+</html>
